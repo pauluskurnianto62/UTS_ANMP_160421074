@@ -16,12 +16,12 @@ import com.android.volley.toolbox.Volley
 import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
 import com.paulus.projectuts_anmp.databinding.FragmentLoginBinding
+import com.paulus.projectuts_anmp.model.News
 import com.paulus.projectuts_anmp.model.User
 import com.paulus.projectuts_anmp.viewmodel.ProfileViewModel
 import org.json.JSONObject
 
 class LoginFragment : Fragment() {
-    private lateinit var viewModel: ProfileViewModel
     private lateinit var binding: FragmentLoginBinding
 
     override fun onCreateView(
@@ -39,30 +39,42 @@ class LoginFragment : Fragment() {
             Navigation.findNavController(it).navigate(action)
         }
 
-        ObserveViewModel()
-
-    }
-
-    fun ObserveViewModel() {
-        viewModel.userLD.observe(viewLifecycleOwner, Observer { user ->
-            binding.btnSignin.setOnClickListener {
-                val q = Volley.newRequestQueue(it.context)
-                val url = "http://10.0.2.2/anmp/news/login.php"
-                //val dialog = AlertDialog.Builder(context)
-                val stringRequest = object: StringRequest(
-                    Request.Method.POST, url, {}, {}) {
-                    override fun getParams(): MutableMap<String, String>? {
-                        val params = HashMap<String, String>()
-                        params["username"]= binding.txtUsername.text.toString()
-                        params["password"]= binding.txtPassword.text.toString()
-                        //dialog.setMessage("Login success")
-                        val action = LoginFragmentDirections.actionLoginNewsListFragment(user.id)
+        binding.btnSignin.setOnClickListener {
+            val q = Volley.newRequestQueue(context)
+            val url = "http://10.0.2.2/anmp/news/login.php"
+            val dialog = AlertDialog.Builder(context)
+            val stringRequest = object : StringRequest(
+                Request.Method.POST, url,
+                {
+                    Log.d("login", it)
+                    val sType = object : TypeToken<User>() { }.type
+                    val user = Gson().fromJson<User>(it, sType)
+                    Log.d("loginresult", user.toString())
+                    dialog.setMessage("Welcome to 'My Hobby' apps, ${binding.txtUsername.text.toString()}")
+                    dialog.setPositiveButton("OK", DialogInterface.OnClickListener { dialog, which ->
+                        val action = LoginFragmentDirections.actionLoginNewsListFragment(user.userid)
                         Navigation.findNavController(binding.root).navigate(action)
-                        return params
-                    }
+                    })
+                    dialog.create().show()
+                },
+                {
+                    Log.e("apiresult", it.printStackTrace().toString())
+                    dialog.setMessage("There's problem in login, please try again")
+                    dialog.setPositiveButton("OK", DialogInterface.OnClickListener { dialog, which ->
+                        dialog.dismiss()
+                    })
+                    dialog.create().show()
                 }
-                q.add(stringRequest)
+            )
+            {
+                override fun getParams(): MutableMap<String, String>? {
+                    val params = HashMap<String, String>()
+                    params["username"] = binding.txtUsername.text.toString()
+                    params["password"] = binding.txtPassword.text.toString()
+                    return params
+                }
             }
-        })
+            q?.add(stringRequest)
+        }
     }
 }

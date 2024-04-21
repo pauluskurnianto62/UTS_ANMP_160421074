@@ -34,6 +34,7 @@ class NewsDetailViewModel(application: Application) : AndroidViewModel(applicati
                 val sType = object : TypeToken<News>() { }.type
                 val result = Gson().fromJson<News>(it, sType)
                 newsLD.value = result
+                Log.d("showvoleydetailResult", result.toString())
             },
             {
                 loadingLD.value = false

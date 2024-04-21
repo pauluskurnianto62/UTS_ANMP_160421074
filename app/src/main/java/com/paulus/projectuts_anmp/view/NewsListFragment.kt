@@ -10,12 +10,12 @@ import androidx.lifecycle.ViewModelProvider
 import androidx.navigation.Navigation
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.paulus.projectuts_anmp.databinding.FragmentNewsListBinding
+import com.paulus.projectuts_anmp.viewmodel.NewsDetailViewModel
 import com.paulus.projectuts_anmp.viewmodel.NewsViewModel
 import com.paulus.projectuts_anmp.viewmodel.ProfileViewModel
 
 class NewsListFragment : Fragment() {
     private lateinit var viewModel: NewsViewModel
-    private lateinit var viewModelProfile: ProfileViewModel
     private val newsListAdapter = NewsListAdapter(arrayListOf())
     private lateinit var binding: FragmentNewsListBinding
 
@@ -47,11 +47,12 @@ class NewsListFragment : Fragment() {
         }
 
         binding.fobProfile.setOnClickListener {
-            val action = NewsListFragmentDirections.actionProfileFragment(0)
-            Navigation.findNavController(it).navigate(action)
+            if(arguments != null) {
+                val userid = NewsListFragmentArgs.fromBundle(requireArguments()).userid
+                val action = NewsListFragmentDirections.actionProfileFragment(userid)
+                Navigation.findNavController(it).navigate(action)
+            }
         }
-
-
     }
 
     fun observeViewModel() {
@@ -76,13 +77,5 @@ class NewsListFragment : Fragment() {
                 binding.progressLoad.visibility = View.GONE
             }
         })
-        viewModelProfile.userLD.observe(viewLifecycleOwner, Observer { user ->
-            binding.fobProfile.setOnClickListener {
-                val action = NewsListFragmentDirections.actionProfileFragment(user.id)
-                Navigation.findNavController(it).navigate(action)
-            }
-        })
     }
-
-
 }

@@ -18,6 +18,7 @@ import com.squareup.picasso.Picasso
 
 class NewsDetailFragment : Fragment() {
     private lateinit var viewModel: NewsDetailViewModel
+    private lateinit var profileViewModel: ProfileViewModel
     private lateinit var binding: FragmentNewsDetailBinding
     var idPar = 0
 
@@ -27,12 +28,12 @@ class NewsDetailFragment : Fragment() {
     ): View? {
         binding = FragmentNewsDetailBinding.inflate(inflater, container, false)
         if(arguments != null) {
-            val newsid =
-                NewsDetailFragmentArgs.fromBundle(requireArguments()).newsId
+            val id =
+                NewsDetailFragmentArgs.fromBundle(requireArguments()).id
             viewModel = ViewModelProvider(this).get(NewsDetailViewModel::class.java)
-            viewModel.fetch(newsid)
+            viewModel.fetch(id)
             observeViewModel()
-            observeParagraph()
+            binding.txtArticle.setText(viewModel.newsLD.value?.detail?.article?.get(idPar).toString())
         }
         binding.btnPrevious.isEnabled = false
         return binding.root
@@ -43,7 +44,7 @@ class NewsDetailFragment : Fragment() {
 
         binding.btnNext.setOnClickListener {
             idPar++
-            observeParagraph()
+            binding.txtArticle.setText(viewModel.newsLD.value?.detail?.article?.get(idPar).toString())
             val currentPage = idPar
             val totalParagraphs = viewModel.newsLD.value?.detail?.article?.size ?: 0
             binding.btnNext.isEnabled = currentPage+1 < totalParagraphs
@@ -52,7 +53,7 @@ class NewsDetailFragment : Fragment() {
 
         binding.btnPrevious.setOnClickListener {
             idPar--
-            observeParagraph()
+            binding.txtArticle.setText(viewModel.newsLD.value?.detail?.article?.get(idPar).toString())
             val currentIndex = idPar
             val totalParagraphs = viewModel.newsLD.value?.detail?.article?.size ?: 0
             binding.btnPrevious.isEnabled = currentIndex+1 > 1
@@ -60,9 +61,11 @@ class NewsDetailFragment : Fragment() {
         }
 
         binding.btnBackNews.setOnClickListener {
-            val action = NewsDetailFragmentDirections.actionNewsDetailFragmentToNewsListFragment(0)
+            val action = NewsDetailFragmentDirections.actionNewsDetailFragmentToNewsListFragment(1)
             Navigation.findNavController(it).navigate(action)
         }
+
+
     }
 
     fun observeViewModel() {
@@ -88,9 +91,9 @@ class NewsDetailFragment : Fragment() {
         })
     }
 
-    fun observeParagraph(){
-        viewModel.newsLD.observe(viewLifecycleOwner, Observer {
-            binding.txtArticle.setText(viewModel.newsLD.value?.detail?.article?.get(idPar).toString())
-        })
-    }
+    //fun observeParagraph(){
+        //viewModel.newsLD.observe(viewLifecycleOwner, Observer {
+            //binding.txtArticle.setText(viewModel.newsLD.value?.detail?.article?.get(idPar).toString())
+        //})
+    //}
 }

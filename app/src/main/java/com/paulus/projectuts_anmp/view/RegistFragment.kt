@@ -37,15 +37,41 @@ class RegistFragment : Fragment() {
         binding.btnCreateAccount.setOnClickListener {
             val q = Volley.newRequestQueue(it.context)
             val url = "http://10.0.2.2/anmp/news/regist.php"
+            val dialog = AlertDialog.Builder(context)
             val stringRequest = object: StringRequest(
-                Request.Method.POST, url, {}, {}) {
+                Request.Method.POST, url, {
+                    Log.d("apiresult", it)
+                    if (binding.txtNewPassword.text.toString() == binding.txtRetypePassword.text.toString()) {
+                        Log.d("apiresult", it)
+                        dialog.setMessage("Success to create a new account")
+                        dialog.setPositiveButton("OK", DialogInterface.OnClickListener { dialog, which ->
+                            val action = RegistFragmentDirections.actionLoginFragment()
+                            Navigation.findNavController(binding.root).navigate(action)
+                        })
+                        dialog.create().show()
+                    }
+                    else {
+                        dialog.setMessage("Password doesn't match")
+                        dialog.setPositiveButton("OK", DialogInterface.OnClickListener { dialog, which ->
+                            dialog.dismiss()
+                        })
+                        dialog.create().show()
+                    }
+                }, {
+                    Log.e("apiresult", it.printStackTrace().toString())
+                    dialog.setMessage("Failed to register, please try again")
+                    dialog.setPositiveButton("OK", DialogInterface.OnClickListener { dialog, which ->
+                        dialog.dismiss()
+                    })
+                    dialog.create().show()
+                }) {
                 override fun getParams(): MutableMap<String, String>? {
                     val params = HashMap<String, String>()
-                    params["first_name"]= binding.txtFirstName.toString()
-                    params["last_name"]= binding.txtLastName.toString()
-                    params["username"]= binding.txtNewUsername.toString()
-                    params["email"]= binding.txtEmail.toString()
-                    params["password"]= binding.txtNewPassword.toString()
+                    params["first_name"]= binding.txtFirstName.text.toString()
+                    params["last_name"]= binding.txtLastName.text.toString()
+                    params["username"]= binding.txtNewUsername.text.toString()
+                    params["email"]= binding.txtEmail.text.toString()
+                    params["password"]= binding.txtNewPassword.text.toString()
 
                     return params
                 }

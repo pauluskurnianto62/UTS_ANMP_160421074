@@ -19,6 +19,7 @@ import com.google.gson.reflect.TypeToken
 import com.paulus.projectuts_anmp.R
 import com.paulus.projectuts_anmp.databinding.FragmentProfileBinding
 import com.paulus.projectuts_anmp.databinding.FragmentRegistBinding
+import com.paulus.projectuts_anmp.model.News
 import com.paulus.projectuts_anmp.model.User
 import com.paulus.projectuts_anmp.viewmodel.NewsDetailViewModel
 import com.paulus.projectuts_anmp.viewmodel.ProfileViewModel
@@ -41,24 +42,72 @@ class ProfileFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        val userId = arguments?.getInt("userId")
-        viewModel = ViewModelProvider(this).get(ProfileViewModel::class.java)
-        viewModel.fetch(userId)
-
-        observeViewModel()
-
-        binding.btnUpdate.setOnClickListener {
-            val q = Volley.newRequestQueue(it.context)
-            val url = "http://10.0.2.2/anmp/news/update_profile.php"
-            val stringRequest = object: StringRequest(
-                Request.Method.POST, url, {}, {}) {
+        if(arguments != null) {
+            val userid = ProfileFragmentArgs.fromBundle(requireArguments()).userid
+            val q = Volley.newRequestQueue(context)
+            val url = "http://10.0.2.2/anmp/news/profile.php"
+            val dialog = AlertDialog.Builder(context)
+            val stringRequest = object : StringRequest(
+                Request.Method.POST, url,
+                {
+                    Log.d("profile", it)
+                    val sType = object : TypeToken<User>() { }.type
+                    val user = Gson().fromJson<User>(it, sType)
+                    Log.d("profile_result", user.toString())
+                    binding.txtEditFirstName.setText(user.first_name.toString())
+                    binding.txtEditLastName.setText(user.last_name.toString())
+                    binding.txtEditPassword.setText(user.password.toString())
+                },
+                {
+                    Log.e("apiresult", it.printStackTrace().toString())
+                    dialog.setMessage("Username is not found")
+                    dialog.setPositiveButton("OK", DialogInterface.OnClickListener { dialog, which ->
+                        dialog.dismiss()
+                    })
+                    dialog.create().show()
+                }
+            ) {
                 override fun getParams(): MutableMap<String, String>? {
                     val params = HashMap<String, String>()
-                    params["first_name"]= binding.txtEditFirstName.toString()
-                    params["last_name"]= binding.txtEditLastName.toString()
-                    params["password"]= binding.txtEditPassword.toString()
-                    params["username"]= userId.toString()
+                    params["id"] = userid.toString()
+                    return params
+                }
+            }
+            q.add(stringRequest)
+        }
 
+        binding.btnUpdate.setOnClickListener {
+            val q = Volley.newRequestQueue(activity)
+            val url = "http://10.0.2.2/anmp/news/update_profile.php"
+            val dialog = AlertDialog.Builder(requireActivity())
+
+            val stringRequest = object : StringRequest(
+                Request.Method.POST, url,
+                {
+                    Log.d("apiresult", it)
+                    dialog.setMessage("Successfully changed the profile")
+                    dialog.setPositiveButton("OK", DialogInterface.OnClickListener { dialog, which ->
+                        binding.txtEditPassword.text?.clear()
+                        dialog.dismiss()
+                    })
+                    dialog.create().show()
+                },
+                {
+                    Log.e("apiresult", it.toString())
+                    dialog.setMessage("Cannot change the profile, please check again")
+                    dialog.setPositiveButton("OK", DialogInterface.OnClickListener { dialog, which ->
+                        binding.txtEditPassword.text?.clear()
+                        dialog.dismiss()
+                    })
+                    dialog.create().show()
+                }
+            ) {
+                override fun getParams(): MutableMap<String, String>? {
+                    val params = HashMap<String, String>()
+                    params["first_name"] = binding.txtEditFirstName.text.toString()
+                    params["last_name"] = binding.txtEditLastName.text.toString()
+                    params["password"] = binding.txtEditPassword.text.toString()
+                    params["id"] = ProfileFragmentArgs.fromBundle(requireArguments()).userid.toString()
                     return params
                 }
             }
@@ -70,18 +119,5 @@ class ProfileFragment : Fragment() {
             Navigation.findNavController(it).navigate(action)
         }
 
-    }
-
-    fun observeViewModel() {
-        viewModel.userLD.observe(viewLifecycleOwner, Observer {user ->
-            binding.txtEditFirstName.setText(user.first_name)
-            binding.txtEditLastName.setText(user.last_name)
-            binding.txtEditPassword.setText(user.password)
-
-            binding.btnBackProfile.setOnClickListener {
-                val action = ProfileFragmentDirections.actionProfileFragmentToNewsListFragment(user.id)
-                Navigation.findNavController(it).navigate(action)
-            }
-        })
     }
 }

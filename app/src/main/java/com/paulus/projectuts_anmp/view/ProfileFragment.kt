@@ -51,16 +51,28 @@ class ProfileFragment : Fragment() {
                 Request.Method.POST, url,
                 {
                     Log.d("profile", it)
-                    val sType = object : TypeToken<User>() { }.type
-                    val user = Gson().fromJson<User>(it, sType)
-                    Log.d("profile_result", user.toString())
-                    binding.txtEditFirstName.setText(user.first_name.toString())
-                    binding.txtEditLastName.setText(user.last_name.toString())
-                    binding.txtEditPassword.setText(user.password.toString())
+                    val obj = JSONObject(it)
+                    if (obj.getString("result") == "success") {
+                        val data = obj.getJSONArray("data")
+                        if (data.length() > 0) {
+                            val dataUser = data.getJSONObject(0)
+                            val sType = object : TypeToken<User>() { }.type
+                            val user = Gson().fromJson(dataUser.toString(), sType) as User
+                            Log.d("profile_result", user.toString())
+                            binding.txtEditFirstName.setText(user.first_name.toString())
+                            binding.txtEditLastName.setText(user.last_name.toString())
+                        }
+                    } else if (obj.getString("result") == "error") {
+                        dialog.setMessage("Username is not found")
+                        dialog.setPositiveButton("OK", DialogInterface.OnClickListener { dialog, which ->
+                            dialog.dismiss()
+                        })
+                        dialog.create().show()
+                    }
                 },
                 {
                     Log.e("apiresult", it.printStackTrace().toString())
-                    dialog.setMessage("Username is not found")
+                    dialog.setMessage("There's error in profile display process, please try again")
                     dialog.setPositiveButton("OK", DialogInterface.OnClickListener { dialog, which ->
                         dialog.dismiss()
                     })

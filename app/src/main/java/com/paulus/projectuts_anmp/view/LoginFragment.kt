@@ -47,19 +47,32 @@ class LoginFragment : Fragment() {
                 Request.Method.POST, url,
                 {
                     Log.d("login", it)
-                    val sType = object : TypeToken<User>() { }.type
-                    val user = Gson().fromJson<User>(it, sType)
-                    Log.d("loginresult", user.toString())
-                    dialog.setMessage("Welcome to 'My Hobby' apps, ${binding.txtUsername.text.toString()}")
-                    dialog.setPositiveButton("OK", DialogInterface.OnClickListener { dialog, which ->
-                        val action = LoginFragmentDirections.actionLoginNewsListFragment(user.userid)
-                        Navigation.findNavController(binding.root).navigate(action)
-                    })
-                    dialog.create().show()
+                    val obj = JSONObject(it)
+                    if (obj.getString("result") == "success") {
+                        val data = obj.getJSONArray("data")
+                        if (data.length() > 0) {
+                            val dataUser = data.getJSONObject(0)
+                            val sType = object : TypeToken<User>() { }.type
+                            val user = Gson().fromJson(dataUser.toString(), sType) as User
+                            Log.d("login_result", user.toString())
+                            dialog.setMessage("Welcome to 'My Hobby' apps, ${user.username}")
+                            dialog.setPositiveButton("OK", DialogInterface.OnClickListener { dialog, which ->
+                                val action = LoginFragmentDirections.actionLoginNewsListFragment(user.userid)
+                                Navigation.findNavController(binding.root).navigate(action)
+                            })
+                            dialog.create().show()
+                        }
+                    } else{
+                        dialog.setMessage("Username or password is incorrect, please try again")
+                        dialog.setPositiveButton("OK", DialogInterface.OnClickListener { dialog, which ->
+                            dialog.dismiss()
+                        })
+                        dialog.create().show()
+                    }
                 },
                 {
                     Log.e("apiresult", it.printStackTrace().toString())
-                    dialog.setMessage("There's problem in login, please try again")
+                    dialog.setMessage("There's error in login process, please try again")
                     dialog.setPositiveButton("OK", DialogInterface.OnClickListener { dialog, which ->
                         dialog.dismiss()
                     })
